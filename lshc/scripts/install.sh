@@ -29,13 +29,48 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 log_info "Installing LSHC (Linux Security Hardening Configurator)..."
+echo ""
 
-# Install Ansible if not present
+# Check prerequisites
+log_info "Checking prerequisites..."
+MISSING_PKGS=()
+
+# Check for Ansible
 if ! command -v ansible &> /dev/null; then
-    log_info "Installing Ansible..."
-    apt-get update -qq
-    apt-get install -y ansible
+    log_warn "  Ansible not found - will install"
+    MISSING_PKGS+=("ansible")
+else
+    log_info "  ✓ Ansible: $(ansible --version | head -1 | cut -d' ' -f2)"
 fi
+
+# Check for ansible-galaxy
+if ! command -v ansible-galaxy &> /dev/null; then
+    log_warn "  ansible-galaxy not found"
+    if [[ ! " ${MISSING_PKGS[@]} " =~ " ansible " ]]; then
+        MISSING_PKGS+=("ansible")
+    fi
+else
+    log_info "  ✓ ansible-galaxy: installed"
+fi
+
+# Install missing packages
+if [[ ${#MISSING_PKGS[@]} -gt 0 ]]; then
+    echo ""
+    log_info "Installing missing packages: ${MISSING_PKGS[*]}"
+    apt-get update -qq || {
+        log_error "Failed to update package lists"
+        exit 1
+    }
+    apt-get install -y "${MISSING_PKGS[@]}" || {
+        log_error "Failed to install required packages"
+        exit 1
+    }
+    log_info "Packages installed successfully"
+else
+    log_info "  ✓ All prerequisites met"
+fi
+
+echo ""
 
 # Install Ansible collections and roles
 log_info "Installing Ansible collections..."

@@ -29,17 +29,62 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 log_info "Installing SAMS (Suspicious Activity Monitoring System)..."
+echo ""
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Check prerequisites
+log_info "Checking prerequisites..."
+MISSING_PKGS=()
+
+# Check for pip3
+if ! command -v pip3 &>/dev/null; then
+    log_warn "  pip3 not found - will install"
+    MISSING_PKGS+=("python3-pip")
+else
+    log_info "  ✓ pip3: installed"
+fi
+
+# Check for auditd
+if ! command -v auditd &>/dev/null && ! systemctl is-active --quiet auditd; then
+    log_warn "  auditd not found - will install"
+    MISSING_PKGS+=("auditd" "audispd-plugins")
+else
+    log_info "  ✓ auditd: installed"
+fi
+
+# Install system packages if needed
+if [[ ${#MISSING_PKGS[@]} -gt 0 ]]; then
+    echo ""
+    log_info "Installing missing packages: ${MISSING_PKGS[*]}"
+    apt-get update -qq || {
+        log_error "Failed to update package lists"
+        exit 1
+    }
+    apt-get install -y "${MISSING_PKGS[@]}" || {
+        log_error "Failed to install required packages"
+        exit 1
+    }
+    log_info "Packages installed successfully"
+else
+    log_info "  ✓ All system packages present"
+fi
+
+echo ""
+
 # Install Python dependencies
 log_info "Installing Python dependencies..."
-pip3 install requests watchdog psutil 2>/dev/null || true
-
-# Install auditd if use_auditd is enabled
-log_info "Installing auditd..."
-apt-get install -y auditd audispd-plugins 2>/dev/null || true
+if command -v pip3 &>/dev/null; then
+    pip3 install requests watchdog psutil -q || {
+        log_error "Failed to install Python dependencies"
+        exit 1
+    }
+    log_info "Python dependencies installed successfully"
+else
+    log_error "pip3 not available"
+    exit 1
+fi
 
 # Create log directory
 log_info "Creating log directory..."

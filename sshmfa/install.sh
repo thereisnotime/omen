@@ -34,11 +34,46 @@ echo "=========================="
 echo ""
 
 log_info "Installing SSHMFA (SSH MFA Hardening with OTP)..."
+echo ""
 
-# Install libpam-google-authenticator
-log_info "Installing libpam-google-authenticator..."
-apt-get update -qq
-apt-get install -y libpam-google-authenticator
+# Check prerequisites
+log_info "Checking prerequisites..."
+MISSING_PKGS=()
+
+# Check for libpam-google-authenticator
+if ! dpkg -l | grep -q libpam-google-authenticator; then
+    log_warn "  libpam-google-authenticator not found - will install"
+    MISSING_PKGS+=("libpam-google-authenticator")
+else
+    log_info "  ✓ libpam-google-authenticator: installed"
+fi
+
+# Check for qrencode (for QR code generation)
+if ! command -v qrencode &>/dev/null; then
+    log_warn "  qrencode not found - will install (needed for QR codes)"
+    MISSING_PKGS+=("qrencode")
+else
+    log_info "  ✓ qrencode: installed"
+fi
+
+# Install missing packages
+if [[ ${#MISSING_PKGS[@]} -gt 0 ]]; then
+    echo ""
+    log_info "Installing missing packages: ${MISSING_PKGS[*]}"
+    apt-get update -qq || {
+        log_error "Failed to update package lists"
+        exit 1
+    }
+    apt-get install -y "${MISSING_PKGS[@]}" || {
+        log_error "Failed to install required packages"
+        exit 1
+    }
+    log_info "Packages installed successfully"
+else
+    log_info "  ✓ All prerequisites met"
+fi
+
+echo ""
 
 # Create omen-totp-admins group if it doesn't exist
 if ! getent group omen-totp-admins >/dev/null; then
