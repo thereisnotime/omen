@@ -72,7 +72,7 @@ vagrant halt
 Create snapshot:
 
 ```bash
-vagrant snapshot save --no-delete snapshot01
+vagrant snapshot save snapshot01
 ```
 
 Restore snapshot:
@@ -90,6 +90,7 @@ vagrant destroy -f
 Cleanup:
 
 ```bash
+vagrant snapshot delete snapshot01 || true
 vagrant destroy -f && \
 rm -rf .vagrant
 if [[ -d "${VM_DISK_LOCATION:-}" ]]; then

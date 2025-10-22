@@ -206,6 +206,197 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
+# thereisnotime v1
+
+# Secrets and credentials
+*.env
+.env.*
+secrets.*
+credentials.*
+*.key
+*.pem
+*.crt
+*.der
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.vault
+*.gpg
+*.asc
+*.id_rsa*
+*.kube/config
+.kube/
+.sops.yaml
+.sops.json
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+override.tf
+override.tf.json
+
+# Ansible
+*.retry
+*.vault_pass
+group_vars/
+host_vars/
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+*.yaml.sensitive
+
+# AWS/GCP/Azure
+.aws/
+.gcp/
+.azure/
+*.credentials
+*credentials.json
+*.config
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.*.yml
+*.tar
+*.img
+*.dockerfile.bak
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.egg
+
+# Node/JS
+node_modules/
+npm-debug.log*
+.yarn/
+.yarnrc
+.pnpm-debug.log
+
+# Ruby
+*.gem
+.bundle/
+vendor/bundle
+
+# Java
+*.class
+*.war
+*.jar
+*.iml
+.gradle/
+target/
+
+# Golang
+*.test
+bin/
+*.exe
+
+# Rust
+/target/
+**/*.rs.bk
+
+# Logs, temp files
+*.log
+*.tmp
+*.swp
+*.bak
+*.old
+*.orig
+*.rej
+*.gz
+
+# Editor/IDE
+.idea/
+.vscode/
+*.code-workspace
+*.sublime*
+*.vs/
+*.DS_Store
+Thumbs.db
+
+# AI/code assistants
+.cursorignore
+.tabnineignore
+.codyignore
+.continueignore
+.opencommitignore
+.autocommitignore
+.codeiumignore
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+*.mdb
+*.sql
+*.dump
+*.rdb
+
+# Backups
+*.bak
+*.bkp
+*.backup
+
+# Build results
+bin/
+obj/
+*.dll
+*.exe
+*.app
+*.user
+*.pdb
+*.cache
+*.mdb
+
+# Visual Studio/VS Code
+.vscode/
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ASP.NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+*.psmdcp
+packages/
+*.deps.json
+*.runtimeconfig.json
+
+# Dotnet CLI
+*.dotCover
+*.dotCover.*.xml
+*.coverage
+TestResults/
+*.trx
+*.coveragexml
+
+# Rider
+.idea/
+*.sln.iml
+
+# Logs and dumps
+*.log
+*.dmp
+
 # General
 .vagrant/
 
