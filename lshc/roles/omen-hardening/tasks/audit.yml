@@ -7,16 +7,22 @@
     state: present
     update_cache: true
 
+- name: Create audit rules directory
+  ansible.builtin.file:
+    path: /etc/audit/rules.d
+    state: directory
+    mode: '0750'
+
 - name: Backup audit rules
   ansible.builtin.copy:
-    src: /etc/audit/rules.d/audit.rules
+    src: /etc/audit/audit.rules
     dest: "{{ omen_backup_dir }}/audit.rules.{{ ansible_date_time.iso8601_basic_short }}"
     remote_src: true
     mode: '0600'
   when: omen_backup_configs
   ignore_errors: true
 
-- name: Create OMEN audit rules file
+- name: Create OMEN audit rules header
   ansible.builtin.copy:
     dest: /etc/audit/rules.d/omen-hardening.rules
     content: |
@@ -32,12 +38,29 @@
       # Failure mode (0=silent 1=printk 2=panic)
       -f 1
       
-      {{ omen_auditd_rules | join('\n') }}
+    mode: '0640'
+
+- name: Add OMEN audit rules
+  ansible.builtin.lineinfile:
+    path: /etc/audit/rules.d/omen-hardening.rules
+    line: "{{ item }}"
+    create: false
+  loop: "{{ omen_auditd_rules }}"
+  notify: restart_auditd
+
+- name: Add audit rules footer
+  ansible.builtin.lineinfile:
+    path: /etc/audit/rules.d/omen-hardening.rules
+    line: |
       
       # Make configuration immutable (requires reboot to change)
       # -e 2
-    mode: '0640'
-  notify: restart_auditd
+    create: false
+
+- name: Generate audit.rules from rules.d
+  ansible.builtin.command: augenrules --load
+  changed_when: true
+  failed_when: false
 
 - name: Enable auditd service
   ansible.builtin.service:
