@@ -10,7 +10,7 @@
 
 **O**bservation, **M**onitoring, **E**nforcement & **N**otification
 
-A comprehensive security tooling suite for Linux systems, designed for security professionals and system administrators.
+A collection of standalone security tools for Linux systems, designed for security professionals and system administrators.
 
 [![License](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
@@ -18,64 +18,109 @@ A comprehensive security tooling suite for Linux systems, designed for security 
 
 ## Overview
 
-OMEN provides three integrated security components that can be used independently or together:
+OMEN provides three **standalone** security components:
 
-1. **LSHC** - Linux Security Hardening Configurator
-2. **SAMS** - Suspicious Activity Monitoring System
-3. **SSHMFA** - SSH MFA Hardening with OTP
+1. **LSHC** - Linux Security Hardening Configurator (Ansible-based)
+2. **SAMS** - Suspicious Activity Monitoring System (Python service)
+3. **SSHMFA** - SSH MFA Hardening with OTP (Shell script)
 
-Each component is designed to address specific security concerns while maintaining ease of use and flexibility.
+Each component is fully independent and can be installed/used separately without any dependencies on the others.
 
 ## Features
 
-- 🎯 **Modular Design** - Use components independently or as a complete suite
-- 🖥️ **Interactive TUI** - Beautiful terminal interface using Rich library
-- 🔧 **CLI Support** - Full command-line interface for automation
-- 📊 **Comprehensive Monitoring** - Real-time security event detection
+- 🎯 **Standalone Components** - Each tool works completely independently
+- 📊 **Comprehensive Security** - Hardening, monitoring, and authentication
 - 🔒 **Industry Standards** - Based on CIS, STIG, and security best practices
 - 📱 **Multi-Platform Alerts** - Slack, Mattermost, Telegram, and custom webhooks
 - 🔐 **Secure by Design** - Proper access controls, auditing, and fail-safes
+- 🛠️ **Simple Installation** - Interactive menu-driven installer
 
 ## Quick Start
 
 ### Prerequisites
 
-- Ubuntu 22.04 LTS or newer
-- Python 3.10+
+- Ubuntu 22.04 LTS or newer (primary target)
+- Python 3.10+ (for SAMS only)
 - Root/sudo access
 
 ### Installation
+
+#### Option 1: Install All Components
 
 ```bash
 # Clone the repository
 git clone https://github.com/thereisnotime/omen.git
 cd omen
 
-# Run the installer
+# Run the installer and select "All components"
 sudo ./install.sh
 ```
 
-The installer will guide you through installing OMEN and its components.
+#### Option 2: Install Individual Components
+
+```bash
+# Clone the repository
+git clone https://github.com/thereisnotime/omen.git
+cd omen
+
+# Run the installer and select the specific component you want
+sudo ./install.sh
+
+# Or install directly
+sudo ./lshc/scripts/install.sh    # LSHC only
+sudo ./sams/install.sh            # SAMS only
+sudo ./sshmfa/install.sh          # SSHMFA only
+```
 
 ### Usage
 
-Launch the interactive TUI:
+Each component has its own commands and management interface:
+
+#### LSHC Usage
 
 ```bash
-sudo omen
+# Apply all hardening rules
+cd /opt/omen/lshc
+ansible-playbook playbook.yml
+
+# Apply specific hardening (by tag)
+ansible-playbook playbook.yml --tags ssh
+ansible-playbook playbook.yml --tags firewall
+
+# Check hardening status
+/opt/omen/lshc/scripts/check-status.sh
 ```
 
-Or use CLI commands:
+#### SAMS Usage
 
 ```bash
-# Show status of all components
-sudo omen status
+# Configure monitoring
+vim /opt/omen/sams/config.json
 
-# Install a specific component
-sudo omen install lshc
+# Start monitoring service
+systemctl start omen-sams
 
-# Install all components
-sudo omen install all
+# Enable on boot
+systemctl enable omen-sams
+
+# View logs
+journalctl -u omen-sams -f
+```
+
+#### SSHMFA Usage
+
+```bash
+# Enroll a user for 2FA
+/opt/omen/sshmfa/scripts/sshmfa.sh enroll <username>
+
+# Enable 2FA globally
+/opt/omen/sshmfa/scripts/sshmfa.sh enable
+
+# Grant temporary bypass
+/opt/omen/sshmfa/scripts/sshmfa.sh bypass-grant <username>
+
+# Check status
+/opt/omen/sshmfa/scripts/sshmfa.sh status
 ```
 
 ## Components
@@ -148,56 +193,65 @@ SSH two-factor authentication with secure bypass mechanism.
 
 ```bash
 # Enroll a user
-sudo python3 /opt/omen/sshmfa/sshmfa.py enroll username
+sudo /opt/omen/sshmfa/scripts/sshmfa.sh enroll username
 
 # Grant temporary bypass
-sudo python3 /opt/omen/sshmfa/sshmfa.py bypass-grant username
+sudo /opt/omen/sshmfa/scripts/sshmfa.sh bypass-grant username
 
 # Enable 2FA system-wide
-sudo /opt/omen/sshmfa/scripts/enable-2fa.sh
+sudo /opt/omen/sshmfa/scripts/sshmfa.sh enable
 ```
 
 [📖 Full SSHMFA Documentation](sshmfa/README.md)
 
 ## Architecture
 
+OMEN is a collection of standalone security tools:
+
 ```text
-OMEN
-├── omen/              # Main Python package
-│   ├── cli.py        # Command-line interface
-│   ├── tui.py        # Terminal UI
-│   ├── common/       # Shared utilities
-│   └── components/   # Component interfaces
-├── lshc/             # Security hardening
-│   ├── playbook.yml
-│   └── roles/
-├── sams/             # Activity monitoring
-│   ├── sams.py
-│   ├── detectors/
-│   └── alerters/
-└── sshmfa/           # SSH MFA
-    ├── sshmfa.py
+/opt/omen/
+├── lshc/                  # LSHC - Security hardening (Ansible)
+│   ├── playbook.yml       # Main playbook
+│   ├── roles/             # Hardening roles
+│   │   └── omen-hardening/
+│   └── scripts/           # Management scripts
+│       ├── install.sh
+│       ├── uninstall.sh
+│       └── check-status.sh
+│
+├── sams/                  # SAMS - Activity monitoring (Python)
+│   ├── sams.py            # Main monitoring script
+│   ├── config.json        # Configuration
+│   ├── detectors/         # Event detectors
+│   ├── alerters/          # Alert backends
+│   ├── install.sh         # Installer
+│   └── systemd/           # Service files
+│
+└── sshmfa/                # SSHMFA - SSH MFA (Shell)
     ├── scripts/
-    └── templates/
+    │   ├── sshmfa.sh      # Main management script
+    │   └── check-bypass.sh  # PAM helper
+    ├── templates/         # Config templates
+    └── install.sh         # Installer
 ```
 
+Each component is **completely independent** and has no dependencies on other components.
+
 ## Configuration
-
-### OMEN System Configuration
-
-Configuration and state tracking:
-
-- Status: `/etc/omen/status.json`
-- Logs: `/var/log/omen/`
-- Backups: `/var/backups/omen/`
 
 ### Component Configuration
 
 Each component has its own configuration:
 
-- LSHC: `/opt/omen/lshc/roles/omen-hardening/defaults/main.yml`
-- SAMS: `/opt/omen/sams/config.json`
-- SSHMFA: PAM and sshd_config modifications
+- **LSHC**: `/opt/omen/lshc/roles/omen-hardening/defaults/main.yml`
+- **SAMS**: `/opt/omen/sams/config.json`
+- **SSHMFA**: PAM configuration and bypass flags in `/var/run/omen/bypass/`
+
+### Logs and Data
+
+- **LSHC**: No persistent logs (Ansible output only)
+- **SAMS**: Logs to `/var/log/omen/sams.log` and systemd journal
+- **SSHMFA**: Audit logs via syslog, bypass tracking in `/var/run/omen/bypass/`
 
 ## Testing
 
@@ -227,11 +281,29 @@ vagrant ssh
 - File modifications are backed up automatically
 - Rate limiting on alerts to prevent storms
 
+## Uninstallation
+
+Each component can be uninstalled independently:
+
+```bash
+# Uninstall LSHC
+sudo /opt/omen/lshc/scripts/uninstall.sh
+
+# Uninstall SAMS
+sudo /opt/omen/sams/uninstall.sh
+
+# Uninstall SSHMFA
+sudo /opt/omen/sshmfa/uninstall.sh
+
+# Remove all (if you want to completely remove OMEN)
+sudo rm -rf /opt/omen
+```
+
 ## Troubleshooting
 
 ### Common Issues
 
-**Installation fails:**
+**Component installer fails:**
 
 - Ensure you're running Ubuntu 22.04+
 - Check Python version: `python3 --version`
@@ -250,7 +322,7 @@ vagrant ssh
 
 ## Roadmap
 
-If for somereason I decide to spend more time on this project, here are some ideas:
+Future improvements for this security toolkit collection:
 
 ### Platform Support
 
@@ -331,10 +403,10 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 ## Acknowledgments
 
-- Built with [Ansible](https://www.ansible.com/)
-- TUI powered by [Rich](https://github.com/Textualize/rich)
+- Built with [Ansible](https://www.ansible.com/) and Python
 - Inspired by industry security standards (CIS, STIG, NIST)
 - Community hardening roles from [dev-sec.io](https://dev-sec.io/)
+- Monitoring capabilities inspired by [OSSEC](https://www.ossec.net/) and [Wazuh](https://wazuh.com/)
 
 ---
 

@@ -8,7 +8,7 @@ import subprocess
 from typing import List, Dict, Any
 from pathlib import Path
 
-from sams.detectors.base import BaseDetector, SecurityEvent
+from detectors.base import BaseDetector, SecurityEvent
 
 
 class PrivilegeEscalationDetector(BaseDetector):

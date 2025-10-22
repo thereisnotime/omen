@@ -6,7 +6,7 @@ SAMS Slack Alerter - Send alerts to Slack using Incoming Webhooks.
 import requests
 from typing import Dict, Any
 
-from sams.alerters.base import BaseAlerter
+from alerters.base import BaseAlerter
 
 
 class SlackAlerter(BaseAlerter):

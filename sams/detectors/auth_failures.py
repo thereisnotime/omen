@@ -9,7 +9,7 @@ from typing import List, Dict, Any
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from sams.detectors.base import BaseDetector, SecurityEvent
+from detectors.base import BaseDetector, SecurityEvent
 
 
 class AuthFailureDetector(BaseDetector):

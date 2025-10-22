@@ -2,11 +2,11 @@
 SAMS Alerters - Alert delivery modules for various platforms.
 """
 
-from sams.alerters.base import BaseAlerter
-from sams.alerters.webhook import WebhookAlerter
-from sams.alerters.slack import SlackAlerter
-from sams.alerters.mattermost import MattermostAlerter
-from sams.alerters.telegram import TelegramAlerter
+from alerters.base import BaseAlerter
+from alerters.webhook import WebhookAlerter
+from alerters.slack import SlackAlerter
+from alerters.mattermost import MattermostAlerter
+from alerters.telegram import TelegramAlerter
 
 __all__ = [
     "BaseAlerter",

@@ -108,10 +108,14 @@ cd /path/to/omen/lshc
 sudo ./scripts/install.sh
 ```
 
-### Via OMEN Installer
+### Via Main Installer Menu
+
+From the OMEN repository root:
 
 ```bash
-sudo omen install lshc
+cd /path/to/omen
+sudo ./install.sh
+# Select option 2 (LSHC only) or option 1 (All components)
 ```
 
 ## Configuration

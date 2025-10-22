@@ -5,7 +5,7 @@ SAMS Mattermost Alerter - Send alerts to Mattermost using Incoming Webhooks.
 Mattermost uses Slack-compatible webhook format.
 """
 
-from sams.alerters.slack import SlackAlerter
+from alerters.slack import SlackAlerter
 
 
 class MattermostAlerter(SlackAlerter):

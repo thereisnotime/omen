@@ -7,7 +7,7 @@ import re
 import subprocess
 from typing import List, Dict, Any
 
-from sams.detectors.base import BaseDetector, SecurityEvent
+from detectors.base import BaseDetector, SecurityEvent
 
 
 class SuspiciousCommandDetector(BaseDetector):

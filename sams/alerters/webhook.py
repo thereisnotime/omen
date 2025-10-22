@@ -7,7 +7,7 @@ import requests
 from typing import Dict, Any
 import json
 
-from sams.alerters.base import BaseAlerter
+from alerters.base import BaseAlerter
 
 
 class WebhookAlerter(BaseAlerter):

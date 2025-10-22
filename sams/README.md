@@ -193,10 +193,14 @@ cd /path/to/omen/sams
 sudo ./install.sh
 ```
 
-### Via OMEN Installer
+### Via Main Installer Menu
+
+From the OMEN repository root:
 
 ```bash
-sudo omen install sams
+cd /path/to/omen
+sudo ./install.sh
+# Select option 3 (SAMS only) or option 1 (All components)
 ```
 
 ## Configuration

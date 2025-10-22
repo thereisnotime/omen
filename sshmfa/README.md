@@ -43,10 +43,14 @@ cd /path/to/omen/sshmfa
 sudo ./install.sh
 ```
 
-### Via OMEN Installer
+### Via Main Installer Menu
+
+From the OMEN repository root:
 
 ```bash
-sudo omen install sshmfa
+cd /path/to/omen
+sudo ./install.sh
+# Select option 4 (SSHMFA only) or option 1 (All components)
 ```
 
 **Note**: Installation does NOT enable 2FA immediately. You must enroll users first.

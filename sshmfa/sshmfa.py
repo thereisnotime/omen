@@ -2,27 +2,28 @@
 """
 SSHMFA - SSH MFA Hardening with OTP
 
-Main management script for SSH 2FA configuration.
+Simple Python wrapper for the sshmfa.sh shell script.
+This provides a Python interface for those who prefer it, but the
+shell script (sshmfa.sh) is the primary standalone interface.
 """
 
 import sys
+import os
 import argparse
 import subprocess
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from omen.common.logger import get_logger
-from omen.common.system import check_root
-
-logger = get_logger(__name__)
+def check_root():
+    """Check if running as root."""
+    return os.geteuid() == 0
 
 
 def main():
     """Main entry point for SSHMFA management."""
     parser = argparse.ArgumentParser(
-        description="SSHMFA - SSH MFA Hardening with OTP"
+        description="SSHMFA - SSH MFA Hardening with OTP",
+        epilog="Note: This is a Python wrapper around sshmfa.sh shell script"
     )
     
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -39,6 +40,9 @@ def main():
     bypass_revoke_parser.add_argument("username", help="Username to revoke bypass")
     
     subparsers.add_parser("bypass-list", help="List active bypasses")
+    subparsers.add_parser("status", help="Show 2FA status")
+    subparsers.add_parser("enable", help="Enable 2FA system-wide")
+    subparsers.add_parser("disable", help="Disable 2FA system-wide")
     
     args = parser.parse_args()
     
@@ -48,14 +52,15 @@ def main():
     
     # Check root privileges
     if not check_root():
-        logger.error("Root privileges required")
+        print("Error: Root privileges required", file=sys.stderr)
+        print("Please run with: sudo python3", sys.argv[0], file=sys.stderr)
         return 1
     
-    # Use unified shell script
+    # Find the shell script
     script = Path(__file__).parent / "scripts" / "sshmfa.sh"
     
     if not script.exists():
-        logger.error(f"SSHMFA script not found: {script}")
+        print(f"Error: SSHMFA script not found: {script}", file=sys.stderr)
         return 1
     
     # Build command
@@ -69,12 +74,21 @@ def main():
         cmd.extend(["bypass-revoke", args.username])
     elif args.command == "bypass-list":
         cmd.append("bypass-list")
+    elif args.command == "status":
+        cmd.append("status")
+    elif args.command == "enable":
+        cmd.append("enable")
+    elif args.command == "disable":
+        cmd.append("disable")
     
-    # Execute command
-    result = subprocess.run(cmd)
-    return result.returncode
+    # Execute command (pass through all output)
+    try:
+        result = subprocess.run(cmd)
+        return result.returncode
+    except Exception as e:
+        print(f"Error executing sshmfa.sh: {e}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

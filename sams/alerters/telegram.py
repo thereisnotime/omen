@@ -6,7 +6,7 @@ SAMS Telegram Alerter - Send alerts to Telegram using Bot API.
 import requests
 from typing import Dict, Any
 
-from sams.alerters.base import BaseAlerter
+from alerters.base import BaseAlerter
 
 
 class TelegramAlerter(BaseAlerter):

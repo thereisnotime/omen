@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# OMEN Main Installation Script
+# OMEN Simple Installation Menu
+# This script helps install standalone security components
 
 set -euo pipefail
 
@@ -40,6 +41,8 @@ cat << "EOF"
                             
  Observation, Monitoring,
  Enforcement & Notification
+ 
+ Standalone Security Tools
 EOF
 echo -e "${NC}"
 echo ""
@@ -66,125 +69,40 @@ if [[ -f /etc/os-release ]]; then
     fi
 fi
 
-# Check Python version
-PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d. -f1)
-PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d. -f2)
-
-log_info "Python version: $PYTHON_VERSION"
-
-if [[ $PYTHON_MAJOR -lt 3 ]] || [[ $PYTHON_MAJOR -eq 3 && $PYTHON_MINOR -lt 10 ]]; then
-    log_error "Python 3.10+ required, found $PYTHON_VERSION"
-    exit 1
-fi
-
-log_header "OMEN Installation"
-log_header "================="
-echo ""
-
 # Get current directory
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="/opt/omen"
 
-log_info "Installation directory: $INSTALL_DIR"
-log_info "Source directory: $CURRENT_DIR"
+log_info "Components will be installed to: $INSTALL_DIR"
 echo ""
 
-# Check and install prerequisites
-log_header "Checking Prerequisites"
-log_header "======================"
+# Installation menu
+log_header "What would you like to install?"
 echo ""
-
-MISSING_PACKAGES=()
-
-# Check for pip3
-log_info "Checking for pip3..."
-if ! command -v pip3 &>/dev/null; then
-    log_warn "  pip3 not found - will install"
-    MISSING_PACKAGES+=("python3-pip")
-else
-    log_info "  ✓ pip3: $(pip3 --version | cut -d' ' -f1-2)"
-fi
-
-# Check for rsync
-log_info "Checking for rsync..."
-if ! command -v rsync &>/dev/null; then
-    log_warn "  rsync not found - will install"
-    MISSING_PACKAGES+=("rsync")
-else
-    log_info "  ✓ rsync: installed"
-fi
-
-# Check for curl (needed for webhook testing)
-log_info "Checking for curl..."
-if ! command -v curl &>/dev/null; then
-    log_warn "  curl not found - will install (needed for SAMS webhooks)"
-    MISSING_PACKAGES+=("curl")
-else
-    log_info "  ✓ curl: installed"
-fi
-
-# Check for git (useful but not critical)
-log_info "Checking for git..."
-if ! command -v git &>/dev/null; then
-    log_warn "  git not found (optional, but recommended for development)"
-else
-    log_info "  ✓ git: installed"
-fi
-
-# Check for jq (useful for JSON manipulation)
-log_info "Checking for jq..."
-if ! command -v jq &>/dev/null; then
-    log_warn "  jq not found (optional, but useful for log analysis)"
-else
-    log_info "  ✓ jq: installed"
-fi
-
-# Install missing packages if any
-if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
-    echo ""
-    log_info "Installing missing packages: ${MISSING_PACKAGES[*]}"
-    apt-get update -qq || log_error "Failed to update package lists"
-    apt-get install -y "${MISSING_PACKAGES[@]}" || {
-        log_error "Failed to install required packages"
-        exit 1
-    }
-    log_info "Required packages installed successfully"
-else
-    log_info "All required packages are present"
-fi
-
-echo ""
-
-# Ask what to install
-echo "What would you like to install?"
-echo ""
-echo "  1) Complete OMEN suite (all components)"
-echo "  2) LSHC only - Linux Security Hardening Configurator"
-echo "  3) SAMS only - Suspicious Activity Monitoring System"
-echo "  4) SSHMFA only - SSH MFA Hardening with OTP"
+echo "  1) All components (LSHC + SAMS + SSHMFA)"
+echo "  2) LSHC  - Linux Security Hardening Configurator"
+echo "  3) SAMS  - Suspicious Activity Monitoring System"
+echo "  4) SSHMFA - SSH MFA Hardening with OTP"
 echo "  5) Exit"
-echo ""
-log_warn "Note: Base OMEN framework will be installed for all options"
-log_info "This provides the 'omen' TUI/CLI for component management"
 echo ""
 read -p "Select option [1-5]: " -r INSTALL_CHOICE
 
 case $INSTALL_CHOICE in
+    1|2|3|4)
+        ;;
     5)
         log_info "Installation cancelled"
         exit 0
         ;;
-    1|2|3|4)
-        ;;
     *)
-        log_error "Invalid choice"
+        log_error "Invalid option"
         exit 1
         ;;
 esac
 
+echo ""
+
 # Determine what to install
-INSTALL_BASE=true
 INSTALL_LSHC=false
 INSTALL_SAMS=false
 INSTALL_SSHMFA=false
@@ -194,157 +112,137 @@ case $INSTALL_CHOICE in
         INSTALL_LSHC=true
         INSTALL_SAMS=true
         INSTALL_SSHMFA=true
-        log_info "Installing complete OMEN suite"
+        log_info "Installing all components"
         ;;
     2)
         INSTALL_LSHC=true
-        log_info "Installing base OMEN + LSHC component"
+        log_info "Installing LSHC"
         ;;
     3)
         INSTALL_SAMS=true
-        log_info "Installing base OMEN + SAMS component"
+        log_info "Installing SAMS"
         ;;
     4)
         INSTALL_SSHMFA=true
-        log_info "Installing base OMEN + SSHMFA component"
+        log_info "Installing SSHMFA"
         ;;
 esac
 
 echo ""
 
-# Create installation directory
-log_info "Creating installation directory..."
+# Create base directory
+log_info "Creating installation directory: $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 
-# Copy files
-log_info "Copying OMEN files..."
-rsync -a --exclude='.git' --exclude='test' --exclude='*.pyc' \
-    "$CURRENT_DIR/" "$INSTALL_DIR/"
-
-# Set ownership
-chown -R root:root "$INSTALL_DIR"
-
-# Make scripts executable
-log_info "Setting permissions..."
-find "$INSTALL_DIR" -type f -name "*.sh" -exec chmod +x {} \;
-find "$INSTALL_DIR" -type f -name "*.py" -exec chmod +x {} \;
-
-# Install Python dependencies
-log_info "Installing Python dependencies..."
-if [[ -f "$INSTALL_DIR/requirements.txt" ]]; then
-    if command -v pip3 &>/dev/null; then
-        pip3 install -r "$INSTALL_DIR/requirements.txt" -q || {
-            log_error "Failed to install Python dependencies"
-            log_error "Try running manually: pip3 install -r $INSTALL_DIR/requirements.txt"
-            exit 1
-        }
-        log_info "Python dependencies installed successfully"
-    else
-        log_error "pip3 not available after installation attempt"
-        exit 1
-    fi
-else
-    log_warn "requirements.txt not found"
-fi
-
-# Create directories
-log_info "Creating OMEN directories..."
-mkdir -p /etc/omen
-mkdir -p /var/log/omen
-mkdir -p /var/lib/omen
-mkdir -p /var/backups/omen
-mkdir -p /var/run/omen
-
-# Create symlinks
-log_info "Creating command symlinks..."
-ln -sf "$INSTALL_DIR/omen/cli.py" /usr/local/bin/omen
-chmod +x /usr/local/bin/omen
-
-# Install selected components
+# Install LSHC
 if [[ "$INSTALL_LSHC" == "true" ]]; then
     log_header ""
-    log_header "Installing LSHC Component..."
+    log_header "╔═══════════════════════════════════════╗"
+    log_header "║  Installing LSHC Component            ║"
+    log_header "╚═══════════════════════════════════════╝"
+    echo ""
+    
+    # Copy LSHC files
+    log_info "Copying LSHC files..."
+    rsync -a --exclude='*.pyc' --exclude='__pycache__' \
+        "$CURRENT_DIR/lshc/" "$INSTALL_DIR/lshc/"
+    
+    # Run LSHC installer
     if [[ -f "$INSTALL_DIR/lshc/scripts/install.sh" ]]; then
+        chmod +x "$INSTALL_DIR/lshc/scripts/install.sh"
         "$INSTALL_DIR/lshc/scripts/install.sh"
+    else
+        log_error "LSHC installer not found"
     fi
 fi
 
+# Install SAMS
 if [[ "$INSTALL_SAMS" == "true" ]]; then
     log_header ""
-    log_header "Installing SAMS Component..."
+    log_header "╔═══════════════════════════════════════╗"
+    log_header "║  Installing SAMS Component            ║"
+    log_header "╚═══════════════════════════════════════╝"
+    echo ""
+    
+    # Copy SAMS files
+    log_info "Copying SAMS files..."
+    rsync -a --exclude='*.pyc' --exclude='__pycache__' \
+        "$CURRENT_DIR/sams/" "$INSTALL_DIR/sams/"
+    
+    # Run SAMS installer
     if [[ -f "$INSTALL_DIR/sams/install.sh" ]]; then
+        chmod +x "$INSTALL_DIR/sams/install.sh"
         "$INSTALL_DIR/sams/install.sh"
+    else
+        log_error "SAMS installer not found"
     fi
 fi
 
+# Install SSHMFA
 if [[ "$INSTALL_SSHMFA" == "true" ]]; then
     log_header ""
-    log_header "Installing SSHMFA Component..."
+    log_header "╔═══════════════════════════════════════╗"
+    log_header "║  Installing SSHMFA Component          ║"
+    log_header "╚═══════════════════════════════════════╝"
+    echo ""
+    
+    # Copy SSHMFA files
+    log_info "Copying SSHMFA files..."
+    rsync -a --exclude='*.pyc' --exclude='__pycache__' \
+        "$CURRENT_DIR/sshmfa/" "$INSTALL_DIR/sshmfa/"
+    
+    # Run SSHMFA installer
     if [[ -f "$INSTALL_DIR/sshmfa/install.sh" ]]; then
+        chmod +x "$INSTALL_DIR/sshmfa/install.sh"
         "$INSTALL_DIR/sshmfa/install.sh"
+    else
+        log_error "SSHMFA installer not found"
     fi
 fi
 
-# Summary
+# Installation summary
 echo ""
+log_header ""
 log_header "╔═══════════════════════════════════════════════════════╗"
-log_header "║         OMEN Installation Complete!                  ║"
+log_header "║         Installation Complete!                        ║"
 log_header "╚═══════════════════════════════════════════════════════╝"
 echo ""
 
-log_info "OMEN has been installed to: $INSTALL_DIR"
-log_info ""
-log_info "Quick Start:"
-log_info "  • Launch TUI:     omen"
-log_info "  • Show status:    omen status"
-log_info "  • Get help:       omen --help"
-log_info ""
+log_info "Components installed to: $INSTALL_DIR"
+echo ""
 
-# Show component-specific information
-if [[ "$INSTALL_LSHC" == "true" ]] || [[ "$INSTALL_SAMS" == "true" ]] || [[ "$INSTALL_SSHMFA" == "true" ]]; then
-    log_info "Installed Components:"
-    
-    if [[ "$INSTALL_LSHC" == "true" ]]; then
-        log_info ""
-        log_info "  LSHC (Linux Security Hardening):"
-        log_info "    • Apply hardening: cd $INSTALL_DIR/lshc && ansible-playbook playbook.yml"
-        log_info "    • Check status:    $INSTALL_DIR/lshc/scripts/check-status.sh"
-        log_info "    • Documentation:   $INSTALL_DIR/lshc/README.md"
-    fi
-    
-    if [[ "$INSTALL_SAMS" == "true" ]]; then
-        log_info ""
-        log_info "  SAMS (Suspicious Activity Monitoring):"
-        log_info "    • Configure:       nano $INSTALL_DIR/sams/config.json"
-        log_info "    • Start service:   systemctl start omen-sams"
-        log_info "    • View logs:       journalctl -u omen-sams -f"
-        log_info "    • Documentation:   $INSTALL_DIR/sams/README.md"
-    fi
-    
-    if [[ "$INSTALL_SSHMFA" == "true" ]]; then
-        log_info ""
-        log_info "  SSHMFA (SSH MFA with OTP):"
-        log_info "    • Enroll user:     $INSTALL_DIR/sshmfa/scripts/sshmfa.sh enroll <username>"
-        log_info "    • Enable 2FA:      $INSTALL_DIR/sshmfa/scripts/sshmfa.sh enable"
-        log_info "    • Documentation:   $INSTALL_DIR/sshmfa/README.md"
-    fi
+# Show component-specific info
+if [[ "$INSTALL_LSHC" == "true" ]]; then
+    log_header "LSHC - Linux Security Hardening"
+    log_info "  Location:     $INSTALL_DIR/lshc"
+    log_info "  Apply:        cd $INSTALL_DIR/lshc && ansible-playbook playbook.yml"
+    log_info "  Status:       $INSTALL_DIR/lshc/scripts/check-status.sh"
+    log_info "  Documentation: $INSTALL_DIR/lshc/README.md"
+    echo ""
 fi
 
-echo ""
-log_info "Main Documentation: $INSTALL_DIR/README.md"
-echo ""
-
-# Component-specific warnings
 if [[ "$INSTALL_SAMS" == "true" ]]; then
-    log_warn "SAMS: Remember to configure alerting in $INSTALL_DIR/sams/config.json"
-fi
-if [[ "$INSTALL_SSHMFA" == "true" ]]; then
-    log_warn "SSHMFA: Enroll at least one user before enabling 2FA system-wide!"
+    log_header "SAMS - Suspicious Activity Monitoring"
+    log_info "  Location:     $INSTALL_DIR/sams"
+    log_info "  Configure:    $INSTALL_DIR/sams/config.json"
+    log_info "  Start:        systemctl start omen-sams"
+    log_info "  Enable:       systemctl enable omen-sams"
+    log_info "  Logs:         journalctl -u omen-sams -f"
+    log_info "  Documentation: $INSTALL_DIR/sams/README.md"
+    log_warn "  ⚠ Configure $INSTALL_DIR/sams/config.json before starting!"
+    echo ""
 fi
 
-if [[ "$INSTALL_SAMS" == "true" ]] || [[ "$INSTALL_SSHMFA" == "true" ]]; then
+if [[ "$INSTALL_SSHMFA" == "true" ]]; then
+    log_header "SSHMFA - SSH MFA with OTP"
+    log_info "  Location:     $INSTALL_DIR/sshmfa"
+    log_info "  Enroll user:  $INSTALL_DIR/sshmfa/scripts/sshmfa.sh enroll <username>"
+    log_info "  Enable 2FA:   $INSTALL_DIR/sshmfa/scripts/sshmfa.sh enable"
+    log_info "  Status:       $INSTALL_DIR/sshmfa/scripts/sshmfa.sh status"
+    log_info "  Documentation: $INSTALL_DIR/sshmfa/README.md"
+    log_warn "  ⚠ Enroll at least one user before enabling 2FA!"
     echo ""
 fi
 
 log_info "Thank you for using OMEN!"
-
+echo ""

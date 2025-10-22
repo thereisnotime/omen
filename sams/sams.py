@@ -16,10 +16,10 @@ from pathlib import Path
 from typing import Dict, Any, List
 from datetime import datetime
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add current directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
 
-from sams.detectors import (
+from detectors import (
     AuthFailureDetector,
     PrivilegeEscalationDetector,
     SuspiciousCommandDetector,
@@ -27,7 +27,7 @@ from sams.detectors import (
     NetworkAnomalyDetector,
 )
 
-from sams.alerters import (
+from alerters import (
     WebhookAlerter,
     SlackAlerter,
     MattermostAlerter,
@@ -205,7 +205,7 @@ class SAMS:
     
     def test_alert(self):
         """Send a test alert."""
-        from sams.detectors.base import SecurityEvent
+        from detectors.base import SecurityEvent
         
         test_event = SecurityEvent(
             event_type="test",
