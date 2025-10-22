@@ -48,7 +48,7 @@ Each component is designed to address specific security concerns while maintaini
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/omen.git
+git clone https://github.com/thereisnotime/omen.git
 cd omen
 
 # Run the installer
