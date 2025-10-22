@@ -1,7 +1,7 @@
 {
   "log_file": "/var/log/omen/sams.log",
   "log_level": "INFO",
-  "check_interval": 60,
+  "check_interval": 20,
   "use_auditd": true,
   
   "detectors": {
