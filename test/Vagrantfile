@@ -1,0 +1,58 @@
+############################################
+# Vagrantfile - Ubuntu 22.04
+############################################
+Vagrant.configure("2") do |config|
+    # Specify the box to use
+    config.vm.box = ENV.fetch('VM_BOX', "bento/ubuntu-24.04")
+    config.vm.box_version = ENV.fetch('VM_IMAGE_VERSION', "20241002.0.0")
+  
+    # Set default VM parameters, allowing them to be overridden by environment variables
+    cpu_count = ENV.fetch('VM_CPU_COUNT', 4).to_i
+    memory_size = ENV.fetch('VM_MEMORY_SIZE', 8192).to_i # 8192 MB = 8 GB
+    bridge_network = ENV.fetch('VM_BRIDGE_INTERFACE', `ip route | grep default | awk '{print $5}' | head -n 1`.strip)
+    disk_location = ENV.fetch('VM_DISK_LOCATION', ENV['HOME'] + '/VMs/TEST-OMEN-UBUNTU2204')
+    project_folder = ENV.fetch('PROJECT_FOLDER', "#{`pwd`.strip}/shared")
+    allowed_public_keys = ENV.fetch('ALLOWED_PUBLIC_KEYS', `cat key.pub`.strip)
+    vm_description = ENV.fetch('VM_DESCRIPTION', "Managed by omen/test/ (#{`pwd`.strip})")
+    guest_shared_folder = "/shared"
+  
+    # Set the VM's provider to VirtualBox
+    config.vm.provider "virtualbox" do |vb|
+      # Name the virtual machine
+      vb.name = ENV.fetch('VM_NAME', 'WS-Ubuntu-Desktop-24')
+      vb.customize ["modifyvm", :id, "--description", vm_description]
+
+      # Set CPU and memory based on environment variables or defaults
+      vb.memory = memory_size
+      vb.cpus = cpu_count
+      vb.customize ["modifyvm", :id, "--vram", "128"]
+      
+      # Start headless
+      #vb.gui = false
+
+      # Disable upgrade of the VirtualBox Guest Additions
+      config.vbguest.auto_update = false if Vagrant.has_plugin?("vagrant-vbguest")
+      vb.customize ["guestproperty", "set", :id, "/VirtualBox/GuestAdd/DoNotUpgrade", "1"]
+
+      # Specify the custom disk location from environment variable
+      vb.customize ["setproperty", "machinefolder", disk_location]
+    end
+    
+    # Disable Virtualbox Remote Display
+    config.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--vrde", "off"]
+    end
+
+    # Network configuration with bridge interface from environment variable
+    config.vm.network "public_network", bridge: bridge_network, use_dhcp_assigned_default_route: true
+
+    # Sync folders
+    config.vm.synced_folder project_folder, guest_shared_folder, owner: "vagrant", group: "vagrant", mount_options: ["dmode=775", "fmode=664"]
+
+    # SSH configuration (optional)
+    config.ssh.insert_key = false
+    
+    # Additional provisioning
+    config.vm.provision "shell", path: "./scripts/perform-debian-upgrade.sh", name: "perform-upgrade", args: [ "true" ]
+    config.vm.provision "shell", path: "./scripts/perform-reboot.sh", name: "perform-reboot"
+  end
