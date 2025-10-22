@@ -1,0 +1,32 @@
+---
+# OMEN Hardening Role - Handlers
+
+- name: Restart SSH
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+  listen: restart_sshd
+
+- name: Restart SSH (sshd)
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+  listen: restart_sshd
+  failed_when: false
+
+- name: Reload sysctl
+  ansible.builtin.command: sysctl -p
+  listen: reload_sysctl
+  changed_when: true
+
+- name: Restart auditd
+  ansible.builtin.service:
+    name: auditd
+    state: restarted
+  listen: restart_auditd
+
+- name: Reload UFW
+  community.general.ufw:
+    state: reloaded
+  listen: reload_ufw
+

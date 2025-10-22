@@ -1,0 +1,58 @@
+---
+# Firewall (UFW) Hardening Tasks
+
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+  when: omen_firewall_enabled
+
+- name: Set UFW default policy - incoming
+  community.general.ufw:
+    direction: incoming
+    policy: "{{ omen_firewall_default_policy }}"
+  when: omen_firewall_enabled
+  notify: reload_ufw
+
+- name: Set UFW default policy - outgoing
+  community.general.ufw:
+    direction: outgoing
+    policy: allow
+  when: omen_firewall_enabled
+  notify: reload_ufw
+
+- name: Allow specified ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment | default('') }}"
+  loop: "{{ omen_firewall_allowed_ports }}"
+  when: omen_firewall_enabled
+  notify: reload_ufw
+
+- name: Enable rate limiting on specified ports
+  community.general.ufw:
+    rule: limit
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop: "{{ omen_firewall_rate_limit }}"
+  when: omen_firewall_enabled
+  notify: reload_ufw
+
+- name: Enable UFW
+  community.general.ufw:
+    state: enabled
+  when: omen_firewall_enabled
+
+- name: Enable UFW logging
+  community.general.ufw:
+    logging: 'on'
+  when: omen_firewall_enabled
+
+- name: Firewall hardening complete
+  ansible.builtin.debug:
+    msg: "Firewall (UFW) configuration applied"
+  when: omen_firewall_enabled
+

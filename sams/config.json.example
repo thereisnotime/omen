@@ -1,0 +1,84 @@
+{
+  "log_file": "/var/log/omen/sams.log",
+  "log_level": "INFO",
+  "check_interval": 60,
+  "use_auditd": true,
+  
+  "detectors": {
+    "auth_failures": {
+      "enabled": true,
+      "threshold": 5,
+      "timeframe": 300
+    },
+    
+    "privilege_escalation": {
+      "enabled": true,
+      "timeframe": 300,
+      "check_suid": true
+    },
+    
+    "suspicious_commands": {
+      "enabled": true,
+      "timeframe": 300,
+      "use_auditd": true
+    },
+    
+    "file_changes": {
+      "enabled": true,
+      "hash_file": "/var/lib/omen/file_hashes.json",
+      "use_auditd": true,
+      "timeframe": 300
+    },
+    
+    "network_anomalies": {
+      "enabled": true,
+      "expected_ports": [22, 80, 443],
+      "alert_on_new_listeners": true
+    }
+  },
+  
+  "alerting": {
+    "webhooks": [
+      {
+        "type": "slack",
+        "enabled": false,
+        "url": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+        "channel": "#security-alerts",
+        "username": "OMEN Security",
+        "icon_emoji": ":shield:"
+      },
+      
+      {
+        "type": "mattermost",
+        "enabled": false,
+        "url": "https://mattermost.example.com/hooks/YOUR_WEBHOOK_ID",
+        "channel": "security-alerts",
+        "username": "OMEN Security"
+      },
+      
+      {
+        "type": "telegram",
+        "enabled": false,
+        "bot_token": "YOUR_BOT_TOKEN",
+        "chat_id": "YOUR_CHAT_ID"
+      },
+      
+      {
+        "type": "webhook",
+        "enabled": false,
+        "url": "https://example.com/webhook",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer YOUR_TOKEN"
+        },
+        "body_template": {
+          "alert_type": "security",
+          "message": "{event.message}",
+          "severity": "{event.severity}"
+        }
+      }
+    ]
+  }
+}
+

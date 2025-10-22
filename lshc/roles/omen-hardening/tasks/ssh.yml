@@ -1,0 +1,123 @@
+---
+# SSH Hardening Tasks
+
+- name: Backup SSH configuration
+  ansible.builtin.copy:
+    src: /etc/ssh/sshd_config
+    dest: "{{ omen_backup_dir }}/sshd_config.{{ ansible_date_time.iso8601_basic_short }}"
+    remote_src: true
+    mode: '0600'
+  when: omen_backup_configs
+
+- name: Configure SSH - Disable root login
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: "PermitRootLogin {{ omen_ssh_permit_root_login }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: "PasswordAuthentication {{ omen_ssh_password_authentication }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Enable public key authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PubkeyAuthentication'
+    line: "PubkeyAuthentication {{ omen_ssh_pubkey_authentication }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Disable empty passwords
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitEmptyPasswords'
+    line: "PermitEmptyPasswords {{ omen_ssh_permit_empty_passwords }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Disable X11 forwarding
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?X11Forwarding'
+    line: "X11Forwarding {{ omen_ssh_x11_forwarding }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Set max authentication tries
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?MaxAuthTries'
+    line: "MaxAuthTries {{ omen_ssh_max_auth_tries }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Set client alive interval
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?ClientAliveInterval'
+    line: "ClientAliveInterval {{ omen_ssh_client_alive_interval }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Set client alive count max
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?ClientAliveCountMax'
+    line: "ClientAliveCountMax {{ omen_ssh_client_alive_count_max }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Set log level
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?LogLevel'
+    line: "LogLevel {{ omen_ssh_log_level }}"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Use strong ciphers
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?Ciphers'
+    line: "Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Use strong MACs
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?MACs'
+    line: "MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: Configure SSH - Use strong key exchange algorithms
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?KexAlgorithms'
+    line: "KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group-exchange-sha256"
+    state: present
+    validate: '/usr/sbin/sshd -t -f %s'
+  notify: restart_sshd
+
+- name: SSH hardening complete
+  ansible.builtin.debug:
+    msg: "SSH hardening configuration applied"
+

@@ -1,0 +1,114 @@
+---
+# OMEN Hardening Role - Default Variables
+
+# SSH Hardening
+omen_ssh_permit_root_login: "no"
+omen_ssh_password_authentication: "no"
+omen_ssh_pubkey_authentication: "yes"
+omen_ssh_permit_empty_passwords: "no"
+omen_ssh_x11_forwarding: "no"
+omen_ssh_max_auth_tries: 3
+omen_ssh_max_sessions: 10
+omen_ssh_client_alive_interval: 300
+omen_ssh_client_alive_count_max: 2
+omen_ssh_protocol: 2
+omen_ssh_log_level: "VERBOSE"
+omen_ssh_port: 22
+
+# Firewall (UFW)
+omen_firewall_enabled: true
+omen_firewall_default_policy: "deny"
+omen_firewall_allowed_ports:
+  - { port: 22, proto: "tcp", comment: "SSH" }
+omen_firewall_rate_limit:
+  - { port: 22, proto: "tcp" }
+
+# Password policies
+omen_password_max_days: 90
+omen_password_min_days: 1
+omen_password_warn_age: 7
+omen_password_min_length: 14
+
+# Kernel hardening (sysctl)
+omen_sysctl_config:
+  # IP forwarding
+  net.ipv4.ip_forward: 0
+  net.ipv6.conf.all.forwarding: 0
+  
+  # ICMP redirect
+  net.ipv4.conf.all.accept_redirects: 0
+  net.ipv4.conf.default.accept_redirects: 0
+  net.ipv6.conf.all.accept_redirects: 0
+  net.ipv6.conf.default.accept_redirects: 0
+  
+  # Send redirects
+  net.ipv4.conf.all.send_redirects: 0
+  net.ipv4.conf.default.send_redirects: 0
+  
+  # Source routing
+  net.ipv4.conf.all.accept_source_route: 0
+  net.ipv4.conf.default.accept_source_route: 0
+  net.ipv6.conf.all.accept_source_route: 0
+  net.ipv6.conf.default.accept_source_route: 0
+  
+  # Reverse path filtering
+  net.ipv4.conf.all.rp_filter: 1
+  net.ipv4.conf.default.rp_filter: 1
+  
+  # Log suspicious packets
+  net.ipv4.conf.all.log_martians: 1
+  net.ipv4.conf.default.log_martians: 1
+  
+  # Ignore ICMP ping requests
+  net.ipv4.icmp_echo_ignore_all: 0
+  
+  # Ignore broadcast pings
+  net.ipv4.icmp_echo_ignore_broadcasts: 1
+  
+  # Ignore bogus ICMP error responses
+  net.ipv4.icmp_ignore_bogus_error_responses: 1
+  
+  # TCP SYN cookies
+  net.ipv4.tcp_syncookies: 1
+  
+  # TCP timestamps
+  net.ipv4.tcp_timestamps: 1
+  
+  # Kernel pointer hiding
+  kernel.kptr_restrict: 2
+  
+  # Kernel dmesg restriction
+  kernel.dmesg_restrict: 1
+  
+  # Kernel panic on oops
+  kernel.panic_on_oops: 1
+  
+  # Core dumps
+  fs.suid_dumpable: 0
+
+# Auditd
+omen_auditd_enabled: true
+omen_auditd_rules:
+  - "-w /etc/passwd -p wa -k identity"
+  - "-w /etc/group -p wa -k identity"
+  - "-w /etc/shadow -p wa -k identity"
+  - "-w /etc/sudoers -p wa -k sudoers"
+  - "-w /etc/sudoers.d/ -p wa -k sudoers"
+  - "-w /var/log/auth.log -p wa -k auth_log"
+  - "-w /var/log/faillog -p wa -k login"
+  - "-w /var/log/lastlog -p wa -k login"
+  - "-w /etc/ssh/sshd_config -p wa -k sshd_config"
+  - "-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change"
+  - "-a always,exit -F arch=b64 -S sethostname -S setdomainname -k system-locale"
+  - "-w /etc/selinux/ -p wa -k MAC-policy"
+  - "-w /var/log/lastlog -p wa -k logins"
+  - "-w /var/run/utmp -p wa -k session"
+  - "-w /var/log/wtmp -p wa -k session"
+  - "-w /var/log/btmp -p wa -k session"
+
+# User management
+omen_disable_users: []  # List of users to disable
+
+# Backup
+omen_backup_configs: true
+

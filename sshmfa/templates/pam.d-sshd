@@ -1,0 +1,25 @@
+# PAM configuration for SSH with 2FA
+# This file is managed by OMEN SSHMFA
+
+# First check for bypass flag
+auth    [success=done default=ignore]    pam_exec.so quiet /opt/omen/sshmfa/scripts/check-bypass.sh
+
+# Then require Google Authenticator OTP
+auth    required                         pam_google_authenticator.so nullok
+
+# Standard authentication
+@include common-auth
+
+# Account management
+account    required     pam_nologin.so
+account    include      common-account
+
+# Password management
+password   include      common-password
+
+# Session management
+session    required     pam_loginuid.so
+session    required     pam_limits.so
+session    optional     pam_systemd.so
+session    include      common-session
+

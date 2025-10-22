@@ -1,0 +1,22 @@
+[Unit]
+Description=OMEN SAMS - Suspicious Activity Monitoring System
+After=network.target auditd.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/omen/sams
+ExecStart=/usr/bin/python3 /opt/omen/sams/sams.py -c /opt/omen/sams/config.json
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=false
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

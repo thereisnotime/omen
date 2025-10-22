@@ -1,0 +1,50 @@
+---
+# OMEN Hardening Role - Main Tasks
+
+- name: Display role information
+  ansible.builtin.debug:
+    msg: "Applying OMEN custom security hardening"
+  tags: always
+
+- name: Include SSH hardening tasks
+  ansible.builtin.import_tasks: ssh.yml
+  tags:
+    - ssh
+    - hardening
+
+- name: Include firewall hardening tasks
+  ansible.builtin.import_tasks: firewall.yml
+  tags:
+    - firewall
+    - hardening
+
+- name: Include user/password policy tasks
+  ansible.builtin.import_tasks: users.yml
+  tags:
+    - users
+    - hardening
+
+- name: Include kernel hardening tasks
+  ansible.builtin.import_tasks: kernel.yml
+  tags:
+    - kernel
+    - hardening
+
+- name: Include audit framework tasks
+  ansible.builtin.import_tasks: audit.yml
+  tags:
+    - audit
+    - hardening
+  when: omen_auditd_enabled
+
+- name: Display hardening summary
+  ansible.builtin.debug:
+    msg: |
+      OMEN hardening tasks completed:
+      - SSH hardening: ✓
+      - Firewall (UFW): ✓
+      - User/Password policies: ✓
+      - Kernel hardening: ✓
+      - Audit framework: {{ '✓' if omen_auditd_enabled else '✗ (disabled)' }}
+  tags: always
+

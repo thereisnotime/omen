@@ -1,0 +1,82 @@
+---
+# User and Password Policy Hardening Tasks
+
+- name: Backup login.defs
+  ansible.builtin.copy:
+    src: /etc/login.defs
+    dest: "{{ omen_backup_dir }}/login.defs.{{ ansible_date_time.iso8601_basic_short }}"
+    remote_src: true
+    mode: '0600'
+  when: omen_backup_configs
+
+- name: Configure password aging - max days
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MAX_DAYS'
+    line: "PASS_MAX_DAYS   {{ omen_password_max_days }}"
+    state: present
+
+- name: Configure password aging - min days
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_MIN_DAYS'
+    line: "PASS_MIN_DAYS   {{ omen_password_min_days }}"
+    state: present
+
+- name: Configure password aging - warning
+  ansible.builtin.lineinfile:
+    path: /etc/login.defs
+    regexp: '^PASS_WARN_AGE'
+    line: "PASS_WARN_AGE   {{ omen_password_warn_age }}"
+    state: present
+
+- name: Install libpam-pwquality for password strength
+  ansible.builtin.apt:
+    name: libpam-pwquality
+    state: present
+    update_cache: true
+
+- name: Configure password quality requirements
+  ansible.builtin.lineinfile:
+    path: /etc/security/pwquality.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: '^#?\s*minlen', line: "minlen = {{ omen_password_min_length }}" }
+    - { regexp: '^#?\s*dcredit', line: 'dcredit = -1' }
+    - { regexp: '^#?\s*ucredit', line: 'ucredit = -1' }
+    - { regexp: '^#?\s*lcredit', line: 'lcredit = -1' }
+    - { regexp: '^#?\s*ocredit', line: 'ocredit = -1' }
+
+- name: Disable unused users
+  ansible.builtin.user:
+    name: "{{ item }}"
+    shell: /usr/sbin/nologin
+  loop: "{{ omen_disable_users }}"
+  when: omen_disable_users | length > 0
+
+- name: Set permissions on /etc/passwd
+  ansible.builtin.file:
+    path: /etc/passwd
+    mode: '0644'
+
+- name: Set permissions on /etc/shadow
+  ansible.builtin.file:
+    path: /etc/shadow
+    mode: '0640'
+
+- name: Set permissions on /etc/group
+  ansible.builtin.file:
+    path: /etc/group
+    mode: '0644'
+
+- name: Set permissions on /etc/gshadow
+  ansible.builtin.file:
+    path: /etc/gshadow
+    mode: '0640'
+
+- name: User/password policy hardening complete
+  ansible.builtin.debug:
+    msg: "User and password policy configuration applied"
+

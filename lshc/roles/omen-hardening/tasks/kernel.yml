@@ -1,0 +1,46 @@
+---
+# Kernel Hardening Tasks
+
+- name: Backup sysctl.conf
+  ansible.builtin.copy:
+    src: /etc/sysctl.conf
+    dest: "{{ omen_backup_dir }}/sysctl.conf.{{ ansible_date_time.iso8601_basic_short }}"
+    remote_src: true
+    mode: '0600'
+  when: omen_backup_configs
+
+- name: Create OMEN sysctl configuration directory
+  ansible.builtin.file:
+    path: /etc/sysctl.d
+    state: directory
+    mode: '0755'
+
+- name: Apply kernel hardening via sysctl
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    sysctl_file: /etc/sysctl.d/99-omen-hardening.conf
+    reload: true
+  loop: "{{ omen_sysctl_config | dict2items }}"
+  notify: reload_sysctl
+
+- name: Disable core dumps in limits.conf
+  ansible.builtin.lineinfile:
+    path: /etc/security/limits.conf
+    regexp: '^\*.*hard.*core'
+    line: '*               hard    core            0'
+    state: present
+
+- name: Disable core dumps in sysctl
+  ansible.posix.sysctl:
+    name: fs.suid_dumpable
+    value: '0'
+    state: present
+    sysctl_file: /etc/sysctl.d/99-omen-hardening.conf
+    reload: true
+
+- name: Kernel hardening complete
+  ansible.builtin.debug:
+    msg: "Kernel hardening configuration applied"
+

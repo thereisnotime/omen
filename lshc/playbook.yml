@@ -1,0 +1,73 @@
+---
+- name: OMEN LSHC - Linux Security Hardening
+  hosts: localhost
+  become: true
+  gather_facts: true
+
+  vars:
+    # Enable/disable components
+    omen_enable_custom_hardening: true
+    omen_enable_community_hardening: false
+    
+    # Backup directory
+    omen_backup_dir: /var/backups/omen/lshc
+
+  pre_tasks:
+    - name: Create backup directory
+      ansible.builtin.file:
+        path: "{{ omen_backup_dir }}"
+        state: directory
+        mode: '0755'
+      tags: always
+
+    - name: Display hardening information
+      ansible.builtin.debug:
+        msg: |
+          OMEN Linux Security Hardening Configurator
+          ==========================================
+          Custom hardening: {{ omen_enable_custom_hardening }}
+          Community hardening: {{ omen_enable_community_hardening }}
+          Backup directory: {{ omen_backup_dir }}
+      tags: always
+
+  roles:
+    # Custom OMEN hardening role
+    - role: omen-hardening
+      when: omen_enable_custom_hardening
+      tags:
+        - custom
+        - omen
+
+    # Optional: Community hardening roles
+    # Uncomment to use dev-sec roles after installing via ansible-galaxy
+    # - role: devsec.hardening.os_hardening
+    #   when: omen_enable_community_hardening
+    #   tags:
+    #     - community
+    #     - os-hardening
+    
+    # - role: devsec.hardening.ssh_hardening
+    #   when: omen_enable_community_hardening
+    #   tags:
+    #     - community
+    #     - ssh-hardening
+
+  post_tasks:
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          OMEN Security Hardening Complete!
+          ==========================================
+          
+          Applied measures:
+          {% if omen_enable_custom_hardening %}
+          - Custom OMEN hardening
+          {% endif %}
+          {% if omen_enable_community_hardening %}
+          - Community hardening roles
+          {% endif %}
+          
+          Please review the changes and reboot if required.
+      tags: always
+

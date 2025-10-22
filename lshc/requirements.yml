@@ -1,0 +1,15 @@
+---
+# Ansible Galaxy requirements for LSHC
+# Optional community hardening roles
+
+collections:
+  - name: ansible.posix
+    version: ">=1.5.0"
+
+roles:
+  - name: devsec.hardening.os_hardening
+    version: ">=7.0.0"
+  
+  - name: devsec.hardening.ssh_hardening
+    version: ">=9.0.0"
+
